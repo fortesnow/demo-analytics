@@ -8,9 +8,10 @@ interface ChartContainerProps {
   children: React.ReactElement;
   data: any[];
   className?: string;
+  action?: React.ReactNode;
 }
 
-const ChartContainer: React.FC<ChartContainerProps> = ({ title, subtitle, children, data, className = '' }) => {
+const ChartContainer: React.FC<ChartContainerProps> = ({ title, subtitle, children, data, className = '', action }) => {
   const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
 
   return (
@@ -23,30 +24,38 @@ const ChartContainer: React.FC<ChartContainerProps> = ({ title, subtitle, childr
           {subtitle && <p className="text-xs text-slate-400 mt-1">{subtitle}</p>}
         </div>
         
-        <div className="flex items-center gap-2 bg-slate-950/30 p-1 rounded-lg border border-white/5">
-           {/* Toggle Switch */}
-            <button
-              onClick={() => setViewMode('chart')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
-                  viewMode === 'chart' 
-                  ? 'bg-slate-800 text-white shadow-sm ring-1 ring-white/10' 
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-              }`}
-            >
-              <BarChart3 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Chart</span>
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
-                  viewMode === 'table' 
-                  ? 'bg-slate-800 text-white shadow-sm ring-1 ring-white/10' 
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-              }`}
-            >
-              <Table className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Table</span>
-            </button>
+        <div className="flex items-center gap-2 flex-wrap">
+           {action && (
+             <div className="mr-1">
+               {action}
+             </div>
+           )}
+           
+           <div className="flex items-center gap-2 bg-slate-950/30 p-1 rounded-lg border border-white/5">
+              {/* Toggle Switch */}
+              <button
+                onClick={() => setViewMode('chart')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                    viewMode === 'chart' 
+                    ? 'bg-slate-800 text-white shadow-sm ring-1 ring-white/10' 
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                }`}
+              >
+                <BarChart3 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Chart</span>
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                    viewMode === 'table' 
+                    ? 'bg-slate-800 text-white shadow-sm ring-1 ring-white/10' 
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                }`}
+              >
+                <Table className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Table</span>
+              </button>
+          </div>
         </div>
       </div>
       

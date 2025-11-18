@@ -7,9 +7,13 @@ import { TimeRange, UserSegment } from './types';
 import { MOCK_METRICS, generateData } from './constants';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
-  BarChart, Bar, PieChart, Pie, Cell, Legend, ResponsiveContainer
+  BarChart, Bar, PieChart, Pie, Cell, Legend, ResponsiveContainer,
+  LineChart, Line
 } from 'recharts';
-import { Calendar, Bell, Search, ChevronDown, Users, Info, SlidersHorizontal } from 'lucide-react';
+import { 
+  Calendar, Bell, Search, ChevronDown, Users, Info, SlidersHorizontal, 
+  Layers, Activity, BarChart2 
+} from 'lucide-react';
 
 const COLORS = ['#6366f1', '#ec4899', '#8b5cf6', '#0ea5e9', '#10b981'];
 
@@ -18,6 +22,7 @@ const App: React.FC = () => {
   const [timeRange, setTimeRange] = useState<TimeRange>(TimeRange.Week);
   const [segment, setSegment] = useState<UserSegment>(UserSegment.All);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [trafficChartType, setTrafficChartType] = useState<'area' | 'bar' | 'line'>('area');
   
   // Simulate data changing when filters change
   const data = useMemo(() => generateData(timeRange, segment), [timeRange, segment]);
@@ -39,6 +44,88 @@ const App: React.FC = () => {
       );
     }
     return null;
+  };
+
+  const trafficChartControls = (
+    <div className="flex items-center gap-1 bg-slate-950/30 p-1 rounded-lg border border-white/5">
+        <button
+            onClick={() => setTrafficChartType('area')}
+            className={`p-1.5 rounded-md transition-all ${trafficChartType === 'area' ? 'bg-slate-800 text-primary shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+            title="Area Chart"
+        >
+            <Layers className="w-3.5 h-3.5" />
+        </button>
+        <button
+            onClick={() => setTrafficChartType('bar')}
+            className={`p-1.5 rounded-md transition-all ${trafficChartType === 'bar' ? 'bg-slate-800 text-primary shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+            title="Bar Chart"
+        >
+            <BarChart2 className="w-3.5 h-3.5" />
+        </button>
+        <button
+            onClick={() => setTrafficChartType('line')}
+            className={`p-1.5 rounded-md transition-all ${trafficChartType === 'line' ? 'bg-slate-800 text-primary shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+            title="Line Chart"
+        >
+            <Activity className="w-3.5 h-3.5" />
+        </button>
+    </div>
+  );
+
+  const renderTrafficChart = () => {
+    const commonProps = {
+      data: data.visitors,
+      margin: { top: 10, right: 10, left: 0, bottom: 0 }
+    };
+
+    const commonComponents = (
+      <>
+        <defs>
+          <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4}/>
+            <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+          </linearGradient>
+          <linearGradient id="colorValue2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#ec4899" stopOpacity={0.1}/>
+            <stop offset="95%" stopColor="#ec4899" stopOpacity={0}/>
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+        <XAxis dataKey="name" stroke="#475569" tick={{fontSize: 10, fill: '#64748b'}} tickLine={false} axisLine={false} dy={10} />
+        <YAxis stroke="#475569" tick={{fontSize: 10, fill: '#64748b'}} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
+        <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '5 5' }} />
+        <Legend wrapperStyle={{paddingTop: '10px'}} iconType="circle" formatter={(val) => <span className="text-slate-400 text-xs">{val}</span>}/>
+      </>
+    );
+
+    if (trafficChartType === 'bar') {
+      return (
+        <BarChart {...commonProps}>
+           {commonComponents}
+           <Bar dataKey="value" name="Current Period" fill="#6366f1" radius={[4, 4, 0, 0]} animationDuration={1500} />
+           <Bar dataKey="value2" name="Previous Period" fill="#ec4899" radius={[4, 4, 0, 0]} animationDuration={1500} fillOpacity={0.5} />
+        </BarChart>
+      );
+    }
+
+    if (trafficChartType === 'line') {
+      return (
+        <LineChart {...commonProps}>
+           {commonComponents}
+           <Line type="monotone" dataKey="value" name="Current Period" stroke="#6366f1" strokeWidth={3} dot={{ r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6, strokeWidth: 0, fill: '#fff' }} animationDuration={1500} />
+           <Line type="monotone" dataKey="value2" name="Previous Period" stroke="#ec4899" strokeWidth={2} strokeDasharray="4 4" dot={false} animationDuration={1500} />
+        </LineChart>
+      );
+    }
+
+    // Default Area
+    return (
+      <AreaChart {...commonProps}>
+        {commonComponents}
+        <Area type="monotone" dataKey="value" name="Current Period" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" activeDot={{ r: 6, strokeWidth: 0, fill: '#fff' }} animationDuration={1500} />
+        <Area type="monotone" dataKey="value2" name="Previous Period" stroke="#ec4899" strokeWidth={2} strokeDasharray="4 4" fillOpacity={1} fill="url(#colorValue2)" animationDuration={1500} />
+      </AreaChart>
+    );
   };
 
   return (
@@ -148,26 +235,9 @@ const App: React.FC = () => {
                 subtitle={`Visitors over the last ${timeRange}`} 
                 data={data.visitors}
                 className="h-full"
+                action={trafficChartControls}
              >
-                <AreaChart data={data.visitors} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorValue2" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ec4899" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#ec4899" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                  <XAxis dataKey="name" stroke="#475569" tick={{fontSize: 10, fill: '#64748b'}} tickLine={false} axisLine={false} dy={10} />
-                  <YAxis stroke="#475569" tick={{fontSize: 10, fill: '#64748b'}} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
-                  <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '5 5' }} />
-                  <Area type="monotone" dataKey="value" name="Current Period" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" activeDot={{ r: 6, strokeWidth: 0, fill: '#fff' }} animationDuration={1500} />
-                  <Area type="monotone" dataKey="value2" name="Previous Period" stroke="#ec4899" strokeWidth={2} strokeDasharray="4 4" fillOpacity={1} fill="url(#colorValue2)" animationDuration={1500} />
-                  <Legend wrapperStyle={{paddingTop: '10px'}} iconType="circle" formatter={(val) => <span className="text-slate-400 text-xs">{val}</span>}/>
-                </AreaChart>
+                {renderTrafficChart()}
              </ChartContainer>
           </div>
 
